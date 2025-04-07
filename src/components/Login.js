@@ -36,18 +36,18 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
+  
     try {
       const response = await axios.post('http://127.0.0.1:8000/login/', credentials, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
+  
       console.log('Login response:', response.data);
-
-      if (response.data && response.data.access) {
-        const userType = response.data.user_type || response.data.user?.user_type;
+  
+      if (response.data.access) {
+        const userType = response.data.user_type;
         if (!userType || userType === 'admin') {
           setAuth(response.data.access);
           navigate('/');
@@ -69,7 +69,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
   return (
     <Container maxWidth="xs">
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
