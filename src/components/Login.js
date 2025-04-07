@@ -38,7 +38,7 @@ const Login = () => {
     setError(null);
   
     try {
-      const response = await axios.post('http://127.0.0.1:8000/login/', credentials, {
+      const response = await axios.post('https://lakshmihomefoods.vercel.app/login/', credentials, {
         headers: {
           'Content-Type': 'application/json',
         },
