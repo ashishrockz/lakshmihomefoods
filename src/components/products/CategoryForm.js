@@ -5,27 +5,34 @@ import {
   Button,
   Paper,
   TextField,
-  Divider,
   IconButton,
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Save as SaveIcon, Cancel as CancelIcon, ColorLens as ColorIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import {
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  ColorLens as ColorIcon,
+  ArrowBack as ArrowBackIcon,
+} from '@mui/icons-material';
 import { SketchPicker } from 'react-color';
 import { useNavigate, useParams } from 'react-router-dom';
-import useAxios from '../../hooks/useAxios';
-import config from '../../config';
+import { getCategoryById, createCategory, updateCategory } from '../../services/productservice.js'; // Updated imports
+
+const generateSlug = (name) => {
+  return name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+};
 
 const CategoryForm = () => {
   const { id } = useParams();
   const isEditMode = !!id;
-  const axios = useAxios();
   const navigate = useNavigate();
 
   const [category, setCategory] = useState({
     name: '',
     description: '',
     color: '#1E8A4C',
+    slug: ''
   });
   const [loading, setLoading] = useState(false);
   const [openColorPicker, setOpenColorPicker] = useState(false);
@@ -44,11 +51,12 @@ const CategoryForm = () => {
   const fetchCategory = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${config.PRODUCTS.CATEGORIES}${id}/`);
+      const response = await getCategoryById(id); // Updated call
       setCategory({
-        name: response.data.name,
-        description: response.data.description || '',
-        color: response.data.color || '#1E8A4C',
+        name: response.name,
+        description: response.description || '',
+        color: response.color || '#1E8A4C',
+        slug: response.slug || '',
       });
     } catch (error) {
       console.error('Error fetching category:', error);
@@ -63,24 +71,8 @@ const CategoryForm = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setCategory((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleColorChange = (color) => {
-    setCategory((prev) => ({
-      ...prev,
-      color: color.hex,
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!category.name.trim()) {
       setSnackbar({
         open: true,
@@ -90,12 +82,23 @@ const CategoryForm = () => {
       return;
     }
 
+    if (!category.slug.trim()) {
+      category.slug = generateSlug(category.name);
+    }
+
+    const categoryData = {
+      name: category.name,
+      description: category.description,
+      color: category.color,
+      slug: category.slug
+    };
+
     setLoading(true);
     try {
       if (isEditMode) {
-        await axios.put(`${config.PRODUCTS.CATEGORIES}${id}/`, category);
+        await updateCategory(id, categoryData); // Updated call
       } else {
-        await axios.post(config.PRODUCTS.CATEGORIES, category);
+        await createCategory(categoryData); // Updated call
       }
       setSnackbar({
         open: true,
@@ -107,14 +110,25 @@ const CategoryForm = () => {
       console.error('Error saving category:', error);
       setSnackbar({
         open: true,
-        message: `Failed to ${isEditMode ? 'update' : 'create'} category: ${
-          error.response?.data?.detail || error.message
-        }`,
+        message: `Failed to ${isEditMode ? 'update' : 'create'} category: ${error.response?.data?.detail || error.message}`,
         severity: 'error',
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCategory((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'name') updated.slug = generateSlug(value);
+      return updated;
+    });
+  };
+
+  const handleColorChange = (color) => {
+    setCategory((prev) => ({ ...prev, color: color.hex }));
   };
 
   const handleCancel = () => {
@@ -124,7 +138,6 @@ const CategoryForm = () => {
   if (loading && isEditMode) {
     return <Box sx={{ p: 3 }}>Loading category details...</Box>;
   }
-
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
@@ -146,6 +159,18 @@ const CategoryForm = () => {
             disabled={loading}
             sx={{ mb: 3 }}
           />
+
+          <TextField
+            label="Slug (URL-friendly name)"
+            name="slug"
+            value={category.slug}
+            onChange={handleInputChange}
+            fullWidth
+            disabled={loading}
+            helperText="Auto-generated from name, but you can customize it"
+            sx={{ mb: 3 }}
+          />
+
           <TextField
             label="Description"
             name="description"
@@ -157,6 +182,7 @@ const CategoryForm = () => {
             disabled={loading}
             sx={{ mb: 3 }}
           />
+
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle1" gutterBottom>
               Category Color
@@ -190,38 +216,32 @@ const CategoryForm = () => {
               </IconButton>
             </Box>
             {openColorPicker && (
-              <Box sx={{ mt: 2, position: 'absolute', zIndex: 1 }}>
-                <Box
-                  sx={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0 }}
-                  onClick={() => setOpenColorPicker(false)}
-                />
+              <Box sx={{ mt: 2 }}>
                 <SketchPicker
                   color={category.color}
-                  onChangeComplete={handleColorChange}
+                  onChange={handleColorChange}
                   disableAlpha
                 />
               </Box>
             )}
           </Box>
-          <Divider sx={{ mb: 3 }} />
-          <Box sx={{ display: 'flex', gap: 2 }}>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<SaveIcon />}
+              disabled={loading}
+            >
+              {isEditMode ? 'Update' : 'Create'}
+            </Button>
             <Button
               variant="outlined"
-              color="inherit"
-              startIcon={<CancelIcon />}
               onClick={handleCancel}
+              startIcon={<CancelIcon />}
               disabled={loading}
             >
               Cancel
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<SaveIcon />}
-              type="submit"
-              disabled={loading || !category.name.trim()}
-            >
-              {loading ? 'Saving...' : isEditMode ? 'Update Category' : 'Create Category'}
             </Button>
           </Box>
         </form>
@@ -229,14 +249,10 @@ const CategoryForm = () => {
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
           {snackbar.message}
         </Alert>
       </Snackbar>

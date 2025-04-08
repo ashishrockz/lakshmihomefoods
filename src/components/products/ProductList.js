@@ -36,8 +36,7 @@ import {
   Visibility as ViewIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import useAxios from '../../hooks/useAxios';
-import config from '../../config';
+import { getAllProducts, deleteProduct } from '../../services/productservice.js'; // Updated imports
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -51,7 +50,6 @@ const ProductList = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   const navigate = useNavigate();
-  const axios = useAxios();
 
   useEffect(() => {
     fetchProducts();
@@ -59,15 +57,9 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${config.API_BASE_URL}/products`, {
-        params: {
-          page: page + 1,
-          limit: rowsPerPage,
-          search: searchTerm
-        }
-      });
-      setProducts(response.data.products);
-      setTotalCount(response.data.total);
+      const response = await getAllProducts(page + 1, rowsPerPage, searchTerm); // Updated call
+      setProducts(response.products);
+      setTotalCount(response.total);
     } catch (error) {
       setSnackbar({
         open: true,
@@ -108,7 +100,7 @@ const ProductList = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`${config.API_BASE_URL}/products/${selectedProduct.id}`);
+      await deleteProduct(selectedProduct.id); // Updated call
       setSnackbar({
         open: true,
         message: 'Product deleted successfully',

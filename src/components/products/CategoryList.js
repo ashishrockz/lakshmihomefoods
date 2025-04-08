@@ -20,11 +20,20 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ColorLens as ColorIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  ColorLens as ColorIcon,
+} from '@mui/icons-material';
 import { SketchPicker } from 'react-color';
-import useAxios from '../../hooks/useAxios';
-import config from '../../config';
 import { useNavigate } from 'react-router-dom';
+import {
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from '../../services/productservice.js'; // Import individual functions
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -44,7 +53,6 @@ const CategoryList = () => {
     severity: 'success',
   });
 
-  const axios = useAxios();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,10 +62,13 @@ const CategoryList = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(config.PRODUCTS.CATEGORIES);
-      setCategories(response.data || []);
+      const response = await getAllCategories(); // Updated to direct import
+      console.log('Categories response:', response); // Debug log
+      // Ensure response is an array; default to [] if not
+      setCategories(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategories([]); // Set to empty array on error
       setSnackbar({
         open: true,
         message: 'Failed to load categories',
@@ -69,21 +80,12 @@ const CategoryList = () => {
   };
 
   const handleOpenDialog = (category = null) => {
-    if (category) {
-      setSelectedCategory(category);
-      setFormValues({
-        name: category.name,
-        description: category.description || '',
-        color: category.color || '#1E8A4C',
-      });
-    } else {
-      setSelectedCategory(null);
-      setFormValues({
-        name: '',
-        description: '',
-        color: '#1E8A4C',
-      });
-    }
+    setSelectedCategory(category);
+    setFormValues({
+      name: category?.name || '',
+      description: category?.description || '',
+      color: category?.color || '#1E8A4C',
+    });
     setOpenDialog(true);
   };
 
@@ -130,14 +132,14 @@ const CategoryList = () => {
 
     try {
       if (selectedCategory) {
-        await axios.put(`${config.PRODUCTS.CATEGORIES}${selectedCategory.id}/`, formValues);
+        await updateCategory(selectedCategory.id, formValues); // Updated to direct import
         setSnackbar({
           open: true,
           message: 'Category updated successfully',
           severity: 'success',
         });
       } else {
-        await axios.post(config.PRODUCTS.CATEGORIES, formValues);
+        await createCategory(formValues); // Updated to direct import
         setSnackbar({
           open: true,
           message: 'Category created successfully',
@@ -150,9 +152,7 @@ const CategoryList = () => {
       console.error('Error saving category:', error);
       setSnackbar({
         open: true,
-        message: `Failed to ${selectedCategory ? 'update' : 'create'} category: ${
-          error.response?.data?.detail || error.message
-        }`,
+        message: `Failed to ${selectedCategory ? 'update' : 'create'} category`,
         severity: 'error',
       });
     }
@@ -160,7 +160,7 @@ const CategoryList = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${config.PRODUCTS.CATEGORIES}${selectedCategory.id}/`);
+      await deleteCategory(selectedCategory.id); // Updated to direct import
       setSnackbar({
         open: true,
         message: 'Category deleted successfully',
@@ -211,7 +211,7 @@ const CategoryList = () => {
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : categories.length === 0 ? (
+              ) : !Array.isArray(categories) || categories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     No categories found
@@ -233,7 +233,7 @@ const CategoryList = () => {
                             mr: 1,
                           }}
                         />
-                        {category.color || 'N/A'}
+                        {category.color}
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -243,7 +243,7 @@ const CategoryList = () => {
                       <IconButton
                         color="primary"
                         size="small"
-                        onClick={() => navigate(`/categories/edit/${category.id}`)} // Changed to navigate to CategoryForm
+                        onClick={() => handleOpenDialog(category)}
                         sx={{ mr: 1 }}
                       >
                         <EditIcon fontSize="small" />
@@ -335,7 +335,7 @@ const CategoryList = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
         <DialogTitle>Delete Category</DialogTitle>
         <DialogContent>
@@ -344,8 +344,7 @@ const CategoryList = () => {
           </Typography>
           {selectedCategory?.product_count > 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              This category has {selectedCategory.product_count} products associated with it. You need to reassign
-              these products before deleting this category.
+              This category has {selectedCategory.product_count} products. You must reassign or delete them first.
             </Alert>
           )}
         </DialogContent>
@@ -357,6 +356,7 @@ const CategoryList = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

@@ -3,7 +3,7 @@ import config from '../config';
 import { setTokens, clearTokens } from '../utils/tokenUtils';
 
 // Login function
-export const login = async (email, password) => {
+export const loginApi = async (email, password) => {
   try {
     const response = await api.post(config.AUTH.LOGIN, {
       email,
@@ -18,7 +18,7 @@ export const login = async (email, password) => {
 };
 
 // Logout function
-export const logout = () => {
+export const logoutApi = () => {
   clearTokens();
 };
 
@@ -33,7 +33,7 @@ export const register = async (userData) => {
 };
 
 // Get user profile
-export const getProfile = async () => {
+export const getProfileApi = async () => {
   try {
     const response = await api.get(config.AUTH.PROFILE);
     return response.data;
@@ -55,10 +55,10 @@ export const changePassword = async (currentPassword, newPassword) => {
   }
 };
 
-// Request password reset (renamed from forgotPassword to match previous error expectation)
+// Request password reset
 export const requestPasswordReset = async (email) => {
   try {
-    const response = await api.post(`${config.AUTH.LOGIN}forgot-password/`, { email });
+    const response = await api.post(config.AUTH.FORGOT_PASSWORD, { email });
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
@@ -68,7 +68,7 @@ export const requestPasswordReset = async (email) => {
 // Reset password
 export const resetPassword = async (token, newPassword) => {
   try {
-    const response = await api.post(`${config.AUTH.LOGIN}reset-password/`, {
+    const response = await api.post(config.AUTH.RESET_PASSWORD, {
       token,
       new_password: newPassword,
     });
