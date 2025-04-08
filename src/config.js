@@ -1,5 +1,5 @@
 const config = {
-  API_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  API_URL: process.env.REACT_APP_API_URL || 'https://lakshmihomefoods.vercel.app/api',
   AUTH: {
     LOGIN: '/auth/login/',
     REGISTER: '/auth/register/',
