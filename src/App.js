@@ -1,86 +1,102 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import Dashboard from './components/Dashboard';
-import Login from './components/Login';
-import Products from './components/Products';
-import Orders from './components/Orders';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import theme from './theme';
 
-// Create theme
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
+// Context Providers
+import { AuthProvider } from './context/AuthContext';
 
-// ProtectedRoute component
-const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  const token = localStorage.getItem('token');
-  return isAuthenticated && token ? children : <Navigate to="/login" />;
-};
+// Route Protection Components
+import ProtectedRoute from './routes/ProtectedRoute';
+import AdminRoute from './routes/AdminRoute';
 
-// Main App component
+// Auth Components
+import Login from './components/auth/Login';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ChangePassword from './components/auth/ChangePassword';
+
+// Dashboard Components
+import Dashboard from './components/dashboard/Dashboard';
+
+// Product Components
+import ProductList from './components/products/ProductList';
+import ProductForm from './components/products/ProductForm';
+import CategoryList from './components/products/CategoryList';
+import CategoryForm from './components/products/CategoryForm';
+
+// Inventory Components
+import InventoryList from './components/inventory/InventoryList';
+import BatchList from './components/inventory/BatchList';
+import LowStockAlert from './components/inventory/LowStockAlert';
+
+// Order Components
+import OrderList from './components/orders/OrderList';
+import OrderDetails from './components/orders/OrderDetails';
+import OrderStatusUpdate from './components/orders/OrderStatusUpdate';
+
+// Payment Components
+import PaymentList from './components/payments/PaymentList';
+
+// User Components
+import UserList from './components/users/UserList';
+import UserForm from './components/users/UserForm';
+
 function App() {
-  const navigate = useNavigate();
-
-  // Logout handler
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('isAuthenticated');
-    navigate('/login');
-  };
-
   return (
     <ThemeProvider theme={theme}>
-      <Routes>
-        {/* Login route as initial route */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Protected Dashboard route with nested routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard onLogout={handleLogout} />
-            </ProtectedRoute>
-          }
-        >
-          <Route
-            path="products"
-            element={
-              <ProtectedRoute>
-                <Products />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="orders"
-            element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            }
-          />
-        </Route>
-
-        {/* Redirect any unmatched route to login */}
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
+      <CssBaseline />
+      <Router>
+        <AuthProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              
+              {/* Product Routes */}
+              <Route path="/products" element={<ProductList />} />
+              <Route path="/products/new" element={<ProductForm />} />
+              <Route path="/products/edit/:id" element={<ProductForm />} />
+              <Route path="/categories" element={<CategoryList />} />
+              <Route path="/categories/new" element={<CategoryForm />} />
+              <Route path="/categories/edit/:id" element={<CategoryForm />} />
+              
+              {/* Inventory Routes */}
+              <Route path="/inventory" element={<InventoryList />} />
+              <Route path="/batches" element={<BatchList />} />
+              <Route path="/low-stock" element={<LowStockAlert />} />
+              
+              {/* Order Routes */}
+              <Route path="/orders" element={<OrderList />} />
+              <Route path="/orders/:id" element={<OrderDetails />} />
+              <Route path="/orders/:id/update" element={<OrderStatusUpdate />} />
+              
+              {/* Payment Routes */}
+              <Route path="/payments" element={<PaymentList />} />
+              
+              {/* Profile & Password */}
+              <Route path="/change-password" element={<ChangePassword />} />
+            </Route>
+            
+            {/* Admin Only Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/users" element={<UserList />} />
+              <Route path="/users/new" element={<UserForm />} />
+              <Route path="/users/edit/:id" element={<UserForm />} />
+            </Route>
+            
+            {/* Redirects */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </AuthProvider>
+      </Router>
     </ThemeProvider>
   );
 }
 
-// Wrap App with Router
-export default function AppWithRouter() {
-  return (
-    <Router>
-      <App />
-    </Router>
-  );
-}
+export default App;
