@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import axios from 'axios';
 import { getTokens, setTokens, clearTokens, isTokenValid } from '../utils/tokenUtils';
 import config from '../config';
-import useAuth from './useAuth';
+import { useAuth } from '../context/AuthContext';
 
 // Create an axios instance
 const axiosInstance = axios.create();

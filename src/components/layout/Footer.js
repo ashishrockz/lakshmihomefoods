@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Link, Divider } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink } from 'react-router-dom';
 
 const Footer = () => {
   const theme = useTheme();
@@ -45,7 +46,8 @@ const Footer = () => {
           }}
         >
           <Link
-            href="/privacy-policy"
+            component={RouterLink}
+            to="/privacy-policy"
             color="text.secondary"
             variant="body2"
             sx={{
@@ -58,7 +60,8 @@ const Footer = () => {
             Privacy Policy
           </Link>
           <Link
-            href="/terms-of-service"
+            component={RouterLink}
+            to="/terms-of-service"
             color="text.secondary"
             variant="body2"
             sx={{
@@ -71,7 +74,8 @@ const Footer = () => {
             Terms of Service
           </Link>
           <Link
-            href="/contact"
+            component={RouterLink}
+            to="/contact"
             color="text.secondary"
             variant="body2"
             sx={{

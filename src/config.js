@@ -1,17 +1,17 @@
 const config = {
   API_URL: process.env.REACT_APP_API_URL || 'https://lakshmihomefoods.vercel.app/api',
   AUTH: {
-    LOGIN: '/auth/login/',
-    REGISTER: '/auth/register/',
-    REFRESH: '/auth/refresh/',
-    PROFILE: '/auth/profile/',
-    CHANGE_PASSWORD: '/auth/change-password/',
-    FORGOT_PASSWORD: '/auth/forgot-password/',
-    RESET_PASSWORD: '/auth/reset-password/'
+    LOGIN: '/login/',
+    REGISTER: '/register/',
+    REFRESH: '/token/refresh/',
+    PROFILE: '/profile/',
+    CHANGE_PASSWORD: '/change-password/',
+    FORGOT_PASSWORD: '/forgot-password/',
+    RESET_PASSWORD: '/reset-password/' // Base path, will append uidb64/token
   },
   ENDPOINTS: {
     PRODUCTS: '/products',
-    CATEGORIES: '/products/categories',
+    CATEGORIES: 'categories',
     INVENTORY: '/inventory',
     BATCHES: '/batches',
     ORDERS: '/orders',

@@ -1,81 +1,43 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { loginApi, logoutApi, getProfileApi} from '../services/auth.service.js';
-import { getTokens } from '../utils/tokenUtils.js';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getTokens, isTokenExpired } from '../utils/tokenUtils';
+import { getProfileApi } from '../services/auth.service';
 
-// Create the context
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is authenticated on mount
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const { accessToken } = getTokens();
-        
-        if (accessToken) {
-          // Get user profile data
-          const userData = await getProfileApi();
-          setCurrentUser(userData);
+    const initializeAuth = async () => {
+      const { accessToken } = getTokens();
+      if (accessToken && !isTokenExpired(accessToken)) {
+        try {
+          const profile = await getProfileApi();
+          setUser({ ...profile, user_type: profile.user_type });
           setIsAuthenticated(true);
-          setIsAdmin(userData.role === 'admin');
+        } catch (error) {
+          setIsAuthenticated(false);
+          setUser(null);
         }
-      } catch (error) {
-        // If token is invalid or expired
-        logoutApi();
-        setCurrentUser(null);
-        setIsAuthenticated(false);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
-
-    checkAuthStatus();
+    initializeAuth();
   }, []);
 
-  // Login function
-  const login = async (email, password) => {
-    const response = await loginApi(email, password);
-    const userData = await getProfileApi();
-    
-    setCurrentUser(userData);
-    setIsAuthenticated(true);
-    setIsAdmin(userData.role === 'admin');
-    
-    return response;
-  };
-
-  // Logout function
-  const logout = () => {
-    logoutApi();
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    setIsAdmin(false);
-  };
-
-  // Update user profile
-  const updateProfile = (userData) => {
-    setCurrentUser({ ...currentUser, ...userData });
-  };
-
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        isAuthenticated,
-        isAdmin,
-        loading,
-        login,
-        logout,
-        updateProfile
-      }}
-    >
+    <AuthContext.Provider value={{ isAuthenticated, user, setIsAuthenticated, setUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

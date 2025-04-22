@@ -2,12 +2,12 @@ import api from './api';
 import config from '../config';
 
 // Ensure base URL has a trailing slash
-const API_BASE = config.API_URL? config.API_URL : `${config.API_URL}`;
+const API_BASE = config.API_URL.endsWith('/') ? config.API_URL : `${config.API_URL}/`;
 
 // Product methods
 export async function getAllProducts(page = 1, limit = 10, search = '', categoryId = null) {
   try {
-    let url = `${API_BASE}${config.ENDPOINTS.PRODUCTS}/?page=${page}&limit=${limit}`;
+    let url = `${API_BASE}products/?page=${page}&limit=${limit}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (categoryId) url += `&category=${categoryId}`;
     
@@ -21,7 +21,7 @@ export async function getAllProducts(page = 1, limit = 10, search = '', category
 
 export async function getProductById(id) {
   try {
-    const response = await api.get(`${API_BASE}${config.ENDPOINTS.PRODUCTS}/${id}/`);
+    const response = await api.get(`${API_BASE}products/${id}/`);
     return response.data;
   } catch (error) {
     console.error('Error in getProductById:', error.response?.data || error.message);
@@ -44,7 +44,7 @@ export async function createProduct(productData) {
       formData.append('image', productData.image);
     }
     
-    const response = await api.post(`${API_BASE}${config.ENDPOINTS.PRODUCTS}/`, formData, {
+    const response = await api.post(`${API_BASE}products/`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -69,7 +69,7 @@ export async function updateProduct(id, productData) {
       formData.append('image', productData.image);
     }
     
-    const response = await api.put(`${API_BASE}${config.ENDPOINTS.PRODUCTS}/${id}/`, formData, {
+    const response = await api.put(`${API_BASE}products/${id}/`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -81,7 +81,7 @@ export async function updateProduct(id, productData) {
 
 export async function deleteProduct(id) {
   try {
-    const response = await api.delete(`${API_BASE}${config.ENDPOINTS.PRODUCTS}/${id}/`);
+    const response = await api.delete(`${API_BASE}products/${id}/`);
     return response.data;
   } catch (error) {
     console.error('Error in deleteProduct:', error.response?.data || error.message);
@@ -89,20 +89,10 @@ export async function deleteProduct(id) {
   }
 }
 
-export async function searchProducts(query) {
-  try {
-    const response = await api.get(`${API_BASE}${config.ENDPOINTS.PRODUCTS}/search/?q=${encodeURIComponent(query)}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error in searchProducts:', error.response?.data || error.message);
-    throw error;
-  }
-}
-
 // Category methods
 export async function getAllCategories() {
   try {
-    const response = await api.get(`${API_BASE}${config.ENDPOINTS.CATEGORIES}`);
+    const response = await api.get(`${API_BASE}categories/`);
     return response.data;
   } catch (error) {
     console.error('Error in getAllCategories:', error.response?.data || error.message);
@@ -110,19 +100,19 @@ export async function getAllCategories() {
   }
 }
 
-export async function getCategoryById(slug) {  // Changed 'id' to 'slug' to match backend
+export async function getCategoryBySlug(slug) {
   try {
-    const response = await api.get(`${API_BASE}${config.ENDPOINTS.CATEGORIES}/${slug}`);
+    const response = await api.get(`${API_BASE}categories/${slug}/`);
     return response.data;
   } catch (error) {
-    console.error('Error in getCategoryById:', error.response?.data || error.message);
+    console.error('Error in getCategoryBySlug:', error.response?.data || error.message);
     throw error;
   }
 }
 
 export async function createCategory(categoryData) {
   try {
-    const response = await api.post(`${API_BASE}${config.ENDPOINTS.CATEGORIES}`, categoryData);
+    const response = await api.post(`${API_BASE}categories/`, categoryData);
     return response.data;
   } catch (error) {
     console.error('Error in createCategory:', error.response?.data || error.message);
@@ -130,9 +120,9 @@ export async function createCategory(categoryData) {
   }
 }
 
-export async function updateCategory(slug, categoryData) {  // Changed 'id' to 'slug'
+export async function updateCategory(slug, categoryData) {
   try {
-    const response = await api.put(`${API_BASE}${config.ENDPOINTS.CATEGORIES}/${slug}`, categoryData);
+    const response = await api.put(`${API_BASE}categories/${slug}/`, categoryData);
     return response.data;
   } catch (error) {
     console.error('Error in updateCategory:', error.response?.data || error.message);
@@ -140,9 +130,9 @@ export async function updateCategory(slug, categoryData) {  // Changed 'id' to '
   }
 }
 
-export async function deleteCategory(slug) {  // Changed 'id' to 'slug'
+export async function deleteCategory(slug) {
   try {
-    const response = await api.delete(`${API_BASE}${config.ENDPOINTS.CATEGORIES}/${slug}`);
+    const response = await api.delete(`${API_BASE}categories/${slug}/`);
     return response.data;
   } catch (error) {
     console.error('Error in deleteCategory:', error.response?.data || error.message);

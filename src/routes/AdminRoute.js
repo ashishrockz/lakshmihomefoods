@@ -1,23 +1,16 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 
 const AdminRoute = () => {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
-  
+  const { isAuthenticated, user, loading } = useAuth();
+
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>; // Or a proper loading spinner
   }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" />;
-  }
-  
-  return <Outlet />;
+
+  const isAdmin = isAuthenticated && user?.user_type === 'admin';
+  return isAdmin ? <Outlet /> : isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 };
 
 export default AdminRoute;

@@ -19,7 +19,8 @@ import {
   ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext';
+
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState('');

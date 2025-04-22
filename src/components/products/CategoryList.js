@@ -28,12 +28,11 @@ import {
 } from '@mui/icons-material';
 import { SketchPicker } from 'react-color';
 import { useNavigate } from 'react-router-dom';
-import {
-  getAllCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-} from '../../services/productservice.js'; // Import individual functions
+import { getAllCategories, createCategory, updateCategory, deleteCategory } from '../../services/productservice.js';
+
+const generateSlug = (name) => {
+  return name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+};
 
 const CategoryList = () => {
   const [categories, setCategories] = useState([]);
@@ -46,6 +45,7 @@ const CategoryList = () => {
     name: '',
     description: '',
     color: '#1E8A4C',
+    slug: '',
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -62,16 +62,14 @@ const CategoryList = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await getAllCategories(); // Updated to direct import
-      console.log('Categories response:', response); // Debug log
-      // Ensure response is an array; default to [] if not
+      const response = await getAllCategories();
       setCategories(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      setCategories([]); // Set to empty array on error
+      setCategories([]);
       setSnackbar({
         open: true,
-        message: 'Failed to load categories',
+        message: `Failed to load categories: ${error.response?.data?.detail || error.message}`,
         severity: 'error',
       });
     } finally {
@@ -85,6 +83,7 @@ const CategoryList = () => {
       name: category?.name || '',
       description: category?.description || '',
       color: category?.color || '#1E8A4C',
+      slug: category?.slug || '',
     });
     setOpenDialog(true);
   };
@@ -107,10 +106,13 @@ const CategoryList = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormValues((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'name' && !prev.slug) {
+        updated.slug = generateSlug(value);
+      }
+      return updated;
+    });
   };
 
   const handleColorChange = (color) => {
@@ -130,16 +132,21 @@ const CategoryList = () => {
       return;
     }
 
+    const categoryData = {
+      ...formValues,
+      slug: formValues.slug.trim() || generateSlug(formValues.name),
+    };
+
     try {
       if (selectedCategory) {
-        await updateCategory(selectedCategory.id, formValues); // Updated to direct import
+        await updateCategory(selectedCategory.slug, categoryData);
         setSnackbar({
           open: true,
           message: 'Category updated successfully',
           severity: 'success',
         });
       } else {
-        await createCategory(formValues); // Updated to direct import
+        await createCategory(categoryData);
         setSnackbar({
           open: true,
           message: 'Category created successfully',
@@ -150,9 +157,15 @@ const CategoryList = () => {
       fetchCategories();
     } catch (error) {
       console.error('Error saving category:', error);
+      let errorMessage = `Failed to ${selectedCategory ? 'update' : 'create'} category`;
+      if (error.response?.data?.slug) {
+        errorMessage = 'Slug already exists. Please choose a different name or slug.';
+      } else {
+        errorMessage = error.response?.data?.detail || error.message;
+      }
       setSnackbar({
         open: true,
-        message: `Failed to ${selectedCategory ? 'update' : 'create'} category`,
+        message: errorMessage,
         severity: 'error',
       });
     }
@@ -160,7 +173,7 @@ const CategoryList = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteCategory(selectedCategory.id); // Updated to direct import
+      await deleteCategory(selectedCategory.slug);
       setSnackbar({
         open: true,
         message: 'Category deleted successfully',
@@ -173,6 +186,8 @@ const CategoryList = () => {
       let errorMessage = 'Failed to delete category';
       if (error.response?.data?.detail?.includes('foreign key constraint')) {
         errorMessage = 'Cannot delete this category because it is used by existing products';
+      } else {
+        errorMessage = error.response?.data?.detail || error.message;
       }
       setSnackbar({
         open: true,
@@ -187,7 +202,11 @@ const CategoryList = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4">Categories</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/categories/new')}
+        >
           Add Category
         </Button>
       </Box>
@@ -198,6 +217,7 @@ const CategoryList = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
+                <TableCell>Slug</TableCell>
                 <TableCell>Description</TableCell>
                 <TableCell>Color</TableCell>
                 <TableCell>Products</TableCell>
@@ -207,20 +227,21 @@ const CategoryList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : !Array.isArray(categories) || categories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
+                  <TableCell colSpan={6} align="center">
                     No categories found
                   </TableCell>
                 </TableRow>
               ) : (
                 categories.map((category) => (
-                  <TableRow key={category.id} hover>
+                  <TableRow key={category.slug} hover>
                     <TableCell>{category.name}</TableCell>
+                    <TableCell>{category.slug}</TableCell>
                     <TableCell>{category.description || 'N/A'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -243,7 +264,7 @@ const CategoryList = () => {
                       <IconButton
                         color="primary"
                         size="small"
-                        onClick={() => handleOpenDialog(category)}
+                        onClick={() => navigate(`/categories/edit/${category.slug}`)}
                         sx={{ mr: 1 }}
                       >
                         <EditIcon fontSize="small" />
@@ -277,6 +298,15 @@ const CategoryList = () => {
               onChange={handleInputChange}
               fullWidth
               required
+              sx={{ mb: 3 }}
+            />
+            <TextField
+              label="Slug (URL-friendly name)"
+              name="slug"
+              value={formValues.slug}
+              onChange={handleInputChange}
+              fullWidth
+              helperText="Auto-generated from name, but you can customize it"
               sx={{ mb: 3 }}
             />
             <TextField
@@ -316,12 +346,16 @@ const CategoryList = () => {
                 </IconButton>
               </Box>
               {openColorPicker && (
-                <Box sx={{ mt: 2, position: 'absolute', zIndex: 1 }}>
+                <Box sx={{ mt: 2, position: 'relative', zIndex: 1 }}>
                   <Box
                     sx={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0 }}
                     onClick={() => setOpenColorPicker(false)}
                   />
-                  <SketchPicker color={formValues.color} onChangeComplete={handleColorChange} />
+                  <SketchPicker
+                    color={formValues.color}
+                    onChangeComplete={handleColorChange}
+                    disableAlpha
+                  />
                 </Box>
               )}
             </Box>
@@ -329,7 +363,11 @@ const CategoryList = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={!formValues.name.trim()}>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={!formValues.name.trim()}
+          >
             {selectedCategory ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
@@ -350,7 +388,11 @@ const CategoryList = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" disabled={selectedCategory?.product_count > 0}>
+          <Button
+            onClick={handleDelete}
+            color="error"
+            disabled={selectedCategory?.product_count > 0}
+          >
             Delete
           </Button>
         </DialogActions>

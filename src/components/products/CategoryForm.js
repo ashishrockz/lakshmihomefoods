@@ -17,22 +17,22 @@ import {
 } from '@mui/icons-material';
 import { SketchPicker } from 'react-color';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getCategoryById, createCategory, updateCategory } from '../../services/productservice.js'; // Updated imports
+import { getCategoryBySlug, createCategory, updateCategory } from '../../services/productservice';
 
 const generateSlug = (name) => {
   return name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
 };
 
 const CategoryForm = () => {
-  const { id } = useParams();
-  const isEditMode = !!id;
+  const { slug } = useParams(); // Changed from 'id' to 'slug'
+  const isEditMode = !!slug;
   const navigate = useNavigate();
 
   const [category, setCategory] = useState({
     name: '',
     description: '',
     color: '#1E8A4C',
-    slug: ''
+    slug: '',
   });
   const [loading, setLoading] = useState(false);
   const [openColorPicker, setOpenColorPicker] = useState(false);
@@ -46,26 +46,25 @@ const CategoryForm = () => {
     if (isEditMode) {
       fetchCategory();
     }
-  }, [id]);
+  }, [slug]);
 
   const fetchCategory = async () => {
     setLoading(true);
     try {
-      const response = await getCategoryById(id); // Updated call
+      const response = await getCategoryBySlug(slug);
       setCategory({
         name: response.name,
         description: response.description || '',
         color: response.color || '#1E8A4C',
-        slug: response.slug || '',
+        slug: response.slug || generateSlug(response.name),
       });
     } catch (error) {
       console.error('Error fetching category:', error);
       setSnackbar({
         open: true,
-        message: 'Failed to load category details',
+        message: `Failed to load category: ${error.response?.data?.detail || error.message}`,
         severity: 'error',
       });
-      navigate('/categories');
     } finally {
       setLoading(false);
     }
@@ -82,23 +81,17 @@ const CategoryForm = () => {
       return;
     }
 
-    if (!category.slug.trim()) {
-      category.slug = generateSlug(category.name);
-    }
-
-    const categoryData = {
-      name: category.name,
-      description: category.description,
-      color: category.color,
-      slug: category.slug
+    const updatedCategory = {
+      ...category,
+      slug: category.slug.trim() || generateSlug(category.name),
     };
 
     setLoading(true);
     try {
       if (isEditMode) {
-        await updateCategory(id, categoryData); // Updated call
+        await updateCategory(slug, updatedCategory);
       } else {
-        await createCategory(categoryData); // Updated call
+        await createCategory(updatedCategory);
       }
       setSnackbar({
         open: true,
@@ -108,9 +101,15 @@ const CategoryForm = () => {
       setTimeout(() => navigate('/categories'), 1500);
     } catch (error) {
       console.error('Error saving category:', error);
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} category`;
+      if (error.response?.data?.slug) {
+        errorMessage = 'Slug already exists. Please choose a different name or slug.';
+      } else {
+        errorMessage = error.response?.data?.detail || error.message;
+      }
       setSnackbar({
         open: true,
-        message: `Failed to ${isEditMode ? 'update' : 'create'} category: ${error.response?.data?.detail || error.message}`,
+        message: errorMessage,
         severity: 'error',
       });
     } finally {
@@ -122,7 +121,9 @@ const CategoryForm = () => {
     const { name, value } = e.target;
     setCategory((prev) => {
       const updated = { ...prev, [name]: value };
-      if (name === 'name') updated.slug = generateSlug(value);
+      if (name === 'name' && !prev.slug) {
+        updated.slug = generateSlug(value);
+      }
       return updated;
     });
   };
@@ -138,6 +139,7 @@ const CategoryForm = () => {
   if (loading && isEditMode) {
     return <Box sx={{ p: 3 }}>Loading category details...</Box>;
   }
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
@@ -216,10 +218,14 @@ const CategoryForm = () => {
               </IconButton>
             </Box>
             {openColorPicker && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 2, position: 'relative', zIndex: 1 }}>
+                <Box
+                  sx={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0 }}
+                  onClick={() => setOpenColorPicker(false)}
+                />
                 <SketchPicker
                   color={category.color}
-                  onChange={handleColorChange}
+                  onChangeComplete={handleColorChange}
                   disableAlpha
                 />
               </Box>
@@ -249,10 +255,14 @@ const CategoryForm = () => {
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={3000}
+        autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

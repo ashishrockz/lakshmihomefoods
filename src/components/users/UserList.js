@@ -23,7 +23,8 @@ import {
   DialogContentText,
   DialogTitle,
   Alert,
-  Snackbar
+  Snackbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -31,9 +32,9 @@ import {
   Add as AddIcon,
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useAxios from '../../hooks/useAxios';
 import config from '../../config';
 
@@ -47,31 +48,46 @@ const UserList = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const axios = useAxios();
 
   useEffect(() => {
+    if (location.state?.resetPage) {
+      setPage(0);
+      setSearchTerm(''); // Clear search to show all users
+    }
     fetchUsers();
-  }, [page, rowsPerPage, searchTerm]);
+  }, [page, rowsPerPage, searchTerm, location.state]);
 
   const fetchUsers = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await axios.get(`${config.API_URL}/users/`, {
         params: {
           page: page + 1,
           limit: rowsPerPage,
-          search: searchTerm
-        }
+          search: searchTerm,
+        },
       });
-      setUsers(response.data.users);
-      setTotalCount(response.data.total);
+      console.log('Fetched users:', response.data); // Debug log
+      setUsers(Array.isArray(response.data) ? response.data : []);
+      setTotalCount(response.headers['x-total-count'] || response.data.length || 0);
     } catch (error) {
+      console.error('Error fetching users:', error);
+      setError(error);
+      setUsers([]);
       setSnackbar({
         open: true,
-        message: 'Error fetching users',
-        severity: 'error'
+        message: `Error fetching users: ${error.response?.data?.detail || error.message}`,
+        severity: 'error',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,14 +126,15 @@ const UserList = () => {
       setSnackbar({
         open: true,
         message: 'User deleted successfully',
-        severity: 'success'
+        severity: 'success',
       });
       fetchUsers();
     } catch (error) {
+      console.error('Error deleting user:', error);
       setSnackbar({
         open: true,
-        message: 'Error deleting user',
-        severity: 'error'
+        message: `Error deleting user: ${error.response?.data?.detail || error.message}`,
+        severity: 'error',
       });
     }
     setOpenDeleteDialog(false);
@@ -153,57 +170,75 @@ const UserList = () => {
         </Box>
       </Box>
 
-      <Paper elevation={3}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Username</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={user.is_active ? 'Active' : 'Inactive'}
-                      color={user.is_active ? 'success' : 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <IconButton onClick={() => navigate(`/users/${user.id}`)}>
-                      <ViewIcon />
-                    </IconButton>
-                    <IconButton onClick={() => navigate(`/users/edit/${user.id}`)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton onClick={(e) => handleMenuOpen(e, user)}>
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">
+          Failed to load users: {error.message}
+        </Alert>
+      ) : (
+        <Paper elevation={3}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Username</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>User Type</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={totalCount}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
+              </TableHead>
+              <TableBody>
+                {Array.isArray(users) && users.length > 0 ? (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.username}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.user_type}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label="Active" // Assume active since is_active is missing
+                          color="success"
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton onClick={() => navigate(`/users/${user.id}`)}>
+                          <ViewIcon />
+                        </IconButton>
+                        <IconButton onClick={() => navigate(`/users/edit/${user.id}`)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={(e) => handleMenuOpen(e, user)}>
+                          <MoreVertIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">
+                      No users found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={totalCount}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      )}
 
       <Menu
         anchorEl={anchorEl}

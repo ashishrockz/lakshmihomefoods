@@ -2,78 +2,70 @@ import api from './api';
 import config from '../config';
 import { setTokens, clearTokens } from '../utils/tokenUtils';
 
-// Login function
-export const loginApi = async (email, password) => {
+export const loginApi = async (username, password) => {
   try {
     const response = await api.post(config.AUTH.LOGIN, {
-      email,
+      username,
       password,
     });
-    const { access, refresh } = response.data;
+    const { access, refresh, user_type } = response.data;
     setTokens(access, refresh);
-    return response.data;
+    return { ...response.data, user_type };
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Login failed';
   }
 };
 
-// Logout function
 export const logoutApi = () => {
   clearTokens();
 };
 
-// Register function
 export const register = async (userData) => {
   try {
     const response = await api.post(config.AUTH.REGISTER, userData);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Registration failed';
   }
 };
 
-// Get user profile
 export const getProfileApi = async () => {
   try {
     const response = await api.get(config.AUTH.PROFILE);
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Could not fetch profile';
   }
 };
 
-// Change password
-export const changePassword = async (currentPassword, newPassword) => {
+export const changePassword = async (oldPassword, newPassword) => {
   try {
     const response = await api.post(config.AUTH.CHANGE_PASSWORD, {
-      current_password: currentPassword,
+      old_password: oldPassword,
       new_password: newPassword,
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Password change failed';
   }
 };
 
-// Request password reset
 export const requestPasswordReset = async (email) => {
   try {
     const response = await api.post(config.AUTH.FORGOT_PASSWORD, { email });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Password reset request failed';
   }
 };
 
-// Reset password
-export const resetPassword = async (token, newPassword) => {
+export const resetPassword = async (uidb64, token, newPassword) => {
   try {
-    const response = await api.post(config.AUTH.RESET_PASSWORD, {
-      token,
+    const response = await api.post(`${config.AUTH.RESET_PASSWORD}${uidb64}/${token}/`, {
       new_password: newPassword,
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data || error;
+    throw error.response?.data?.error || error.message || 'Password reset failed';
   }
 };

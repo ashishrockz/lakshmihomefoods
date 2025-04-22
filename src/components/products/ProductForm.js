@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -25,7 +25,7 @@ import {
   Container,
   Breadcrumbs,
   Link,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Save as SaveIcon,
   Cancel as CancelIcon,
@@ -38,34 +38,34 @@ import {
   PhotoCamera as PhotoCameraIcon,
   Help as HelpIcon,
   Category as CategoryIcon,
-} from "@mui/icons-material";
-import { useNavigate, useParams, Link as RouterLink } from "react-router-dom";
-import { getAllCategories, getProductById, createProduct, updateProduct } from "../../services/productservice.js"; // Updated imports
+} from '@mui/icons-material';
+import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
+import { getAllCategories, getProductById, createProduct, updateProduct } from '../../services/productservice.js';
 
 const ProductForm = () => {
   const { id } = useParams();
   const isEditMode = !!id;
 
   const [product, setProduct] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category_id: "",
+    name: '',
+    description: '',
+    price: '',
+    category_id: '',
     active: true,
     low_stock_threshold: 10,
-    image_url: "",
-    variants: [{ size: "", weight: "", price_adjustment: 0 }],
+    image_url: '',
+    variants: [{ size: '', weight: '', price_adjustment: 0 }],
   });
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
+  const [imagePreview, setImagePreview] = useState('');
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: "",
-    severity: "success",
+    message: '',
+    severity: 'success',
   });
 
   const navigate = useNavigate();
@@ -79,15 +79,15 @@ const ProductForm = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await getAllCategories(); // Updated call
+      const response = await getAllCategories();
       setCategories(Array.isArray(response) ? response : []);
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error('Error fetching categories:', error);
       setCategories([]);
       setSnackbar({
         open: true,
-        message: "Failed to load categories",
-        severity: "error",
+        message: `Failed to load categories: ${error.response?.data?.detail || error.message}`,
+        severity: 'error',
       });
     }
   };
@@ -95,7 +95,7 @@ const ProductForm = () => {
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const productData = await getProductById(id); // Updated call
+      const productData = await getProductById(id);
       setProduct({
         name: productData.name,
         description: productData.description,
@@ -112,17 +112,17 @@ const ProductForm = () => {
                 weight: v.weight,
                 price_adjustment: v.price_adjustment,
               }))
-            : [{ size: "", weight: "", price_adjustment: 0 }],
+            : [{ size: '', weight: '', price_adjustment: 0 }],
       });
       setImagePreview(productData.image_url);
     } catch (error) {
-      console.error("Error fetching product:", error);
+      console.error('Error fetching product:', error);
       setSnackbar({
         open: true,
-        message: "Failed to load product details",
-        severity: "error",
+        message: `Failed to load product: ${error.response?.data?.detail || error.message}`,
+        severity: 'error',
       });
-      navigate("/products");
+      navigate('/products');
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ const ProductForm = () => {
     const { name, value, type, checked } = e.target;
     setProduct({
       ...product,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -153,7 +153,7 @@ const ProductForm = () => {
       ...product,
       variants: [
         ...product.variants,
-        { size: "", weight: "", price_adjustment: 0 },
+        { size: '', weight: '', price_adjustment: 0 },
       ],
     });
   };
@@ -180,10 +180,10 @@ const ProductForm = () => {
 
   const handleImageRemove = () => {
     setImageFile(null);
-    setImagePreview("");
+    setImagePreview('');
     setProduct({
       ...product,
-      image_url: "",
+      image_url: '',
     });
   };
 
@@ -192,8 +192,8 @@ const ProductForm = () => {
     if (!product.name || !product.price || !product.category_id) {
       setSnackbar({
         open: true,
-        message: "Please fill in all required fields",
-        severity: "error",
+        message: 'Please fill in all required fields',
+        severity: 'error',
       });
       return;
     }
@@ -214,25 +214,23 @@ const ProductForm = () => {
       }
 
       if (isEditMode) {
-        await updateProduct(id, productData); // Updated call
+        await updateProduct(id, productData);
       } else {
-        await createProduct(productData); // Updated call
+        await createProduct(productData);
       }
 
       setSnackbar({
         open: true,
-        message: `Product ${isEditMode ? "updated" : "created"} successfully`,
-        severity: "success",
+        message: `Product ${isEditMode ? 'updated' : 'created'} successfully`,
+        severity: 'success',
       });
-      setTimeout(() => navigate("/products"), 1500);
+      setTimeout(() => navigate('/products'), 1500);
     } catch (error) {
-      console.error("Error saving product:", error);
+      console.error('Error saving product:', error);
       setSnackbar({
         open: true,
-        message: `Failed to ${isEditMode ? "update" : "create"} product: ${
-          error.response?.data?.message || "Unknown error"
-        }`,
-        severity: "error",
+        message: `Failed to ${isEditMode ? 'update' : 'create'} product: ${error.response?.data?.detail || error.message}`,
+        severity: 'error',
       });
     } finally {
       setSubmitLoading(false);
@@ -240,15 +238,15 @@ const ProductForm = () => {
   };
 
   const handleCancel = () => {
-    navigate("/products");
+    navigate('/products');
   };
 
   if (loading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <Paper sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography variant="h6" sx={{ mb: 2 }}>Loading product details...</Typography>
-          <LinearProgress sx={{ width: "80%" }} />
+          <LinearProgress sx={{ width: '80%' }} />
         </Paper>
       </Container>
     );
@@ -260,15 +258,15 @@ const ProductForm = () => {
         <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 2 }}>
           <Link component={RouterLink} to="/" color="inherit">Dashboard</Link>
           <Link component={RouterLink} to="/products" color="inherit">Products</Link>
-          <Typography color="text.primary">{isEditMode ? "Edit Product" : "Add New Product"}</Typography>
+          <Typography color="text.primary">{isEditMode ? 'Edit Product' : 'Add New Product'}</Typography>
         </Breadcrumbs>
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleCancel} sx={{ mr: 2 }}>
             Back to Products
           </Button>
-          <Typography variant="h4" sx={{ flexGrow: 1 }}>{isEditMode ? "Edit Product" : "Add New Product"}</Typography>
+          <Typography variant="h4" sx={{ flexGrow: 1 }}>{isEditMode ? 'Edit Product' : 'Add New Product'}</Typography>
           {isEditMode && (
-            <Chip label={product.active ? "Active" : "Inactive"} color={product.active ? "success" : "default"} sx={{ ml: 2 }} />
+            <Chip label={product.active ? 'Active' : 'Inactive'} color={product.active ? 'success' : 'default'} sx={{ ml: 2 }} />
           )}
         </Box>
       </Box>
@@ -279,8 +277,8 @@ const ProductForm = () => {
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }} elevation={2}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>Product Information</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Product Information</Typography>
                 <Tooltip title="Fill in the basic product details here">
                   <IconButton size="small" sx={{ ml: 1 }}><InfoIcon fontSize="small" /></IconButton>
                 </Tooltip>
@@ -369,14 +367,14 @@ const ProductForm = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                     <FormControlLabel
                       control={<Switch checked={product.active} onChange={handleInputChange} name="active" color="primary" />}
                       label={
-                        <Box sx={{ display: "flex", flexDirection: "column" }}>
-                          <Typography variant="body1">{product.active ? "Active" : "Inactive"}</Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                          <Typography variant="body1">{product.active ? 'Active' : 'Inactive'}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {product.active ? "Product is visible to customers" : "Product is hidden from customers"}
+                            {product.active ? 'Product is visible to customers' : 'Product is hidden from customers'}
                           </Typography>
                         </Box>
                       }
@@ -386,9 +384,9 @@ const ProductForm = () => {
               </Grid>
             </Paper>
             <Paper sx={{ p: 3, borderRadius: 2 }} elevation={2}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold" }}>Product Variants</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Product Variants</Typography>
                   <Tooltip title="Add size, weight or other variations with different pricing">
                     <IconButton size="small" sx={{ ml: 1 }}><InfoIcon fontSize="small" /></IconButton>
                   </Tooltip>
@@ -402,10 +400,10 @@ const ProductForm = () => {
                 <Paper
                   key={index}
                   elevation={1}
-                  sx={{ mb: 3, p: 2, borderRadius: 1, position: "relative", transition: "all 0.2s", "&:hover": { boxShadow: 3 } }}
+                  sx={{ mb: 3, p: 2, borderRadius: 1, position: 'relative', transition: 'all 0.2s', '&:hover': { boxShadow: 3 } }}
                 >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "medium" }}>Variant {index + 1}</Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>Variant {index + 1}</Typography>
                     {product.variants.length > 1 && (
                       <Tooltip title="Remove this variant">
                         <IconButton size="small" onClick={() => handleRemoveVariant(index)} color="error" sx={{ p: 0.5 }}>
@@ -419,7 +417,7 @@ const ProductForm = () => {
                       <TextField
                         label="Size"
                         value={variant.size}
-                        onChange={(e) => handleVariantChange(index, "size", e.target.value)}
+                        onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
                         fullWidth
                         variant="outlined"
                         placeholder="e.g., Small, Medium, Large"
@@ -430,7 +428,7 @@ const ProductForm = () => {
                       <TextField
                         label="Weight"
                         value={variant.weight}
-                        onChange={(e) => handleVariantChange(index, "weight", e.target.value)}
+                        onChange={(e) => handleVariantChange(index, 'weight', e.target.value)}
                         fullWidth
                         variant="outlined"
                         placeholder="e.g., 16oz, 32oz"
@@ -442,7 +440,7 @@ const ProductForm = () => {
                         label="Price Adjustment"
                         type="number"
                         value={variant.price_adjustment}
-                        onChange={(e) => handleVariantChange(index, "price_adjustment", e.target.value)}
+                        onChange={(e) => handleVariantChange(index, 'price_adjustment', e.target.value)}
                         fullWidth
                         variant="outlined"
                         InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
@@ -450,7 +448,7 @@ const ProductForm = () => {
                         helperText={
                           variant.price_adjustment > 0
                             ? `Final: $${(Number(product.price || 0) + Number(variant.price_adjustment)).toFixed(2)}`
-                            : ""
+                            : ''
                         }
                       />
                     </Grid>
@@ -458,7 +456,7 @@ const ProductForm = () => {
                 </Paper>
               ))}
               {product.variants.length === 0 && (
-                <Box sx={{ textAlign: "center", py: 3 }}>
+                <Box sx={{ textAlign: 'center', py: 3 }}>
                   <Typography variant="body2" color="text.secondary">No variants added yet</Typography>
                   <Button startIcon={<AddIcon />} onClick={handleAddVariant} sx={{ mt: 1 }}>Add First Variant</Button>
                 </Box>
@@ -467,45 +465,45 @@ const ProductForm = () => {
           </Grid>
           <Grid item xs={12} md={4}>
             <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }} elevation={2}>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>Product Image</Typography>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>Product Image</Typography>
               <Divider sx={{ mb: 3 }} />
               <Box
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   height: 240,
-                  border: "2px dashed",
-                  borderColor: imagePreview ? "transparent" : "divider",
+                  border: '2px dashed',
+                  borderColor: imagePreview ? 'transparent' : 'divider',
                   borderRadius: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   mb: 2,
-                  overflow: "hidden",
-                  position: "relative",
-                  bgcolor: imagePreview ? "transparent" : "action.hover",
-                  transition: "all 0.2s",
-                  "&:hover": { borderColor: imagePreview ? "transparent" : "primary.main" },
-                  "&:hover .image-overlay": { opacity: 1 },
+                  overflow: 'hidden',
+                  position: 'relative',
+                  bgcolor: imagePreview ? 'transparent' : 'action.hover',
+                  transition: 'all 0.2s',
+                  '&:hover': { borderColor: imagePreview ? 'transparent' : 'primary.main' },
+                  '&:hover .image-overlay': { opacity: 1 },
                 }}
               >
                 {imagePreview ? (
                   <>
-                    <img src={imagePreview} alt="Product" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    <img src={imagePreview} alt="Product" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     <Box
                       className="image-overlay"
                       sx={{
-                        position: "absolute",
+                        position: 'absolute',
                         top: 0,
                         left: 0,
-                        width: "100%",
-                        height: "100%",
-                        backgroundColor: "rgba(0,0,0,0.6)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         opacity: 0,
-                        transition: "opacity 0.3s",
+                        transition: 'opacity 0.3s',
                       }}
                     >
                       <Box>
@@ -536,14 +534,14 @@ const ProductForm = () => {
                 )}
               </Box>
               {imageFile && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
                   Selected file: {imageFile.name} ({(imageFile.size / 1024).toFixed(1)} KB)
                 </Typography>
               )}
             </Paper>
             <Card sx={{ mb: 3, borderRadius: 2 }} elevation={2}>
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
                   Product Preview
                   <Tooltip title="This is how your product will appear to customers">
                     <IconButton size="small" sx={{ ml: 1 }}><InfoIcon fontSize="small" /></IconButton>
@@ -553,49 +551,49 @@ const ProductForm = () => {
                 <Box
                   sx={{
                     borderRadius: 1,
-                    overflow: "hidden",
+                    overflow: 'hidden',
                     height: 180,
-                    bgcolor: "grey.100",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    bgcolor: 'grey.100',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     mb: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
+                    border: '1px solid',
+                    borderColor: 'divider',
                   }}
                 >
                   {imagePreview ? (
-                    <img src={imagePreview} alt="Product" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    <img src={imagePreview} alt="Product" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   ) : (
                     <Typography variant="body2" color="text.secondary">No image uploaded</Typography>
                   )}
                 </Box>
-                <Typography variant="subtitle1" fontWeight="bold">{product.name || "Product Name"}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">{product.name || 'Product Name'}</Typography>
                 {product.category_id && categories.length > 0 && (
                   <Chip
-                    label={categories.find((c) => c.id === product.category_id)?.name || "Category"}
+                    label={categories.find((c) => c.id === product.category_id)?.name || 'Category'}
                     size="small"
                     sx={{ mt: 0.5, mb: 1 }}
                   />
                 )}
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxHeight: 60, overflow: "hidden", textOverflow: "ellipsis" }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxHeight: 60, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {product.description
                     ? product.description.length > 100
-                      ? product.description.substring(0, 100) + "..."
+                      ? product.description.substring(0, 100) + '...'
                       : product.description
-                    : "Product description will appear here"}
+                    : 'Product description will appear here'}
                 </Typography>
                 <Typography variant="h6" color="primary" fontWeight="bold">${Number(product.price || 0).toFixed(2)}</Typography>
                 {product.variants.some((v) => v.size || v.weight) && (
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="caption" color="text.secondary">Available options:</Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                       {product.variants.map((v, i) => {
                         if (!v.size && !v.weight) return null;
                         return (
                           <Chip
                             key={i}
-                            label={[v.size, v.weight].filter(Boolean).join(" - ")}
+                            label={[v.size, v.weight].filter(Boolean).join(' - ')}
                             size="small"
                             variant="outlined"
                           />
@@ -606,7 +604,7 @@ const ProductForm = () => {
                 )}
               </CardContent>
             </Card>
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <Button variant="outlined" color="inherit" startIcon={<CancelIcon />} fullWidth onClick={handleCancel} size="large">
                 Cancel
               </Button>
@@ -619,7 +617,7 @@ const ProductForm = () => {
                 disabled={submitLoading}
                 size="large"
               >
-                {submitLoading ? (isEditMode ? "Updating..." : "Creating...") : (isEditMode ? "Update Product" : "Create Product")}
+                {submitLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Product' : 'Create Product')}
               </Button>
             </Box>
           </Grid>
@@ -630,9 +628,13 @@ const ProductForm = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

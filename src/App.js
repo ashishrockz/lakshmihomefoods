@@ -11,10 +11,14 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AdminRoute from './routes/AdminRoute';
 
+// Layout Component
+import MainLayout from './components/layout/MainLayout';
+
 // Auth Components
 import Login from './components/auth/Login';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ChangePassword from './components/auth/ChangePassword';
+import ResetPassword from './components/auth/ResetPassword';
 
 // Dashboard Components
 import Dashboard from './components/dashboard/Dashboard';
@@ -42,6 +46,11 @@ import PaymentList from './components/payments/PaymentList';
 import UserList from './components/users/UserList';
 import UserForm from './components/users/UserForm';
 
+// Static Pages
+import PrivacyPolicy from './components/static/PrivacyPolicy';
+import TermsOfService from './components/static/TermsOfService.js';
+import Contact from './components/static/Contact';
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -52,41 +61,187 @@ function App() {
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
+            <Route
+              path="/privacy-policy"
+              element={
+                <MainLayout>
+                  <PrivacyPolicy />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/terms-of-service"
+              element={
+                <MainLayout>
+                  <TermsOfService />
+                </MainLayout>
+              }
+            />
+            <Route
+              path="/contact"
+              element={
+                <MainLayout>
+                  <Contact />
+                </MainLayout>
+              }
+            />
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              
+              <Route
+                path="/dashboard"
+                element={
+                  <MainLayout>
+                    <Dashboard />
+                  </MainLayout>
+                }
+              />
               {/* Product Routes */}
-              <Route path="/products" element={<ProductList />} />
-              <Route path="/products/new" element={<ProductForm />} />
-              <Route path="/products/edit/:id" element={<ProductForm />} />
-              <Route path="/categories" element={<CategoryList />} />
-              <Route path="/categories/new" element={<CategoryForm />} />
-              <Route path="/categories/edit/:id" element={<CategoryForm />} />
-              
+              <Route
+                path="/products"
+                element={
+                  <MainLayout>
+                    <ProductList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/products/new"
+                element={
+                  <MainLayout>
+                    <ProductForm />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/products/edit/:id"
+                element={
+                  <MainLayout>
+                    <ProductForm />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/categories"
+                element={
+                  <MainLayout>
+                    <CategoryList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/categories/new"
+                element={
+                  <MainLayout>
+                    <CategoryForm />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/categories/edit/:slug"
+                element={
+                  <MainLayout>
+                    <CategoryForm />
+                  </MainLayout>
+                }
+              />
               {/* Inventory Routes */}
-              <Route path="/inventory" element={<InventoryList />} />
-              <Route path="/batches" element={<BatchList />} />
-              <Route path="/low-stock" element={<LowStockAlert />} />
-              
+              <Route
+                path="/inventory"
+                element={
+                  <MainLayout>
+                    <InventoryList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/batches"
+                element={
+                  <MainLayout>
+                    <BatchList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/low-stock"
+                element={
+                  <MainLayout>
+                    <LowStockAlert />
+                  </MainLayout>
+                }
+              />
               {/* Order Routes */}
-              <Route path="/orders" element={<OrderList />} />
-              <Route path="/orders/:id" element={<OrderDetails />} />
-              <Route path="/orders/:id/update" element={<OrderStatusUpdate />} />
-              
+              <Route
+                path="/orders"
+                element={
+                  <MainLayout>
+                    <OrderList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/orders/:id"
+                element={
+                  <MainLayout>
+                    <OrderDetails />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/orders/:id/update"
+                element={
+                  <MainLayout>
+                    <OrderStatusUpdate />
+                  </MainLayout>
+                }
+              />
               {/* Payment Routes */}
-              <Route path="/payments" element={<PaymentList />} />
-              
+              <Route
+                path="/payments"
+                element={
+                  <MainLayout>
+                    <PaymentList />
+                  </MainLayout>
+                }
+              />
               {/* Profile & Password */}
-              <Route path="/change-password" element={<ChangePassword />} />
+              <Route
+                path="/change-password"
+                element={
+                  <MainLayout>
+                    <ChangePassword />
+                  </MainLayout>
+                }
+              />
             </Route>
             
             {/* Admin Only Routes */}
             <Route element={<AdminRoute />}>
-              <Route path="/users" element={<UserList />} />
-              <Route path="/users/new" element={<UserForm />} />
-              <Route path="/users/edit/:id" element={<UserForm />} />
+              <Route
+                path="/users"
+                element={
+                  <MainLayout>
+                    <UserList />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/users/new"
+                element={
+                  <MainLayout>
+                    <UserForm />
+                  </MainLayout>
+                }
+              />
+              <Route
+                path="/users/edit/:id"
+                element={
+                  <MainLayout>
+                    <UserForm />
+                  </MainLayout>
+                }
+              />
             </Route>
             
             {/* Redirects */}
